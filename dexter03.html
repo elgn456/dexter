@@ -1,0 +1,703 @@
+<!DOCTYPE html>
+<html lang="az">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DEXTER | The Dark Passenger</title>
+
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: #050505;
+            color: white;
+            font-family: Georgia, "Times New Roman", serif;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        /* BACKGROUND */
+
+        #background {
+            position: fixed;
+            inset: 0;
+            background: radial-gradient(
+                circle at center,
+                #350000 0%,
+                #150000 35%,
+                #050505 75%
+            );
+            z-index: 0;
+        }
+
+        #canvas {
+            position: fixed;
+            inset: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 2;
+            pointer-events: none;
+            transition: opacity 1.5s;
+        }
+
+        /* CORNER TEXT */
+
+        .corner {
+            position: fixed;
+            z-index: 6;
+            color: #555;
+            font-family: monospace;
+            font-size: 11px;
+            letter-spacing: 3px;
+            transition: opacity 1s;
+        }
+
+        .top-left {
+            top: 30px;
+            left: 30px;
+        }
+
+        .bottom-right {
+            bottom: 30px;
+            right: 30px;
+        }
+
+        .corner.hide {
+            opacity: 0;
+        }
+
+        /* FIRST SCREEN */
+
+        #intro-screen {
+            position: fixed;
+            inset: 0;
+            z-index: 5;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            transition: opacity 1.5s, transform 1.5s;
+        }
+
+        #intro-screen.hide {
+            opacity: 0;
+            transform: scale(1.1);
+            pointer-events: none;
+        }
+
+        .small-text {
+            opacity: 0;
+            color: #aaa;
+            font-size: 15px;
+            letter-spacing: 8px;
+            text-align: center;
+            animation: appear 2s ease forwards;
+            animation-delay: 1s;
+        }
+
+        .title {
+            position: relative;
+            color: #e00000;
+            font-size: clamp(65px, 15vw, 220px);
+            letter-spacing: clamp(5px, 1.5vw, 18px);
+            text-shadow:
+                0 0 10px #8b0000,
+                0 0 25px #600000,
+                0 0 50px #300000;
+            opacity: 0;
+            animation: titleAppear 3s ease forwards;
+            animation-delay: 1.5s;
+        }
+
+        .title::after {
+            content: "";
+            position: absolute;
+            left: 10%;
+            right: 5%;
+            bottom: -20px;
+            height: 4px;
+            background: #a00000;
+            box-shadow: 0 0 10px red, 0 0 25px #700000;
+            transform: scaleX(0);
+            transform-origin: left;
+            animation: lineAppear 2s ease forwards;
+            animation-delay: 3s;
+        }
+
+        .subtitle {
+            margin-top: 50px;
+            color: #777;
+            font-size: 13px;
+            letter-spacing: 6px;
+            text-align: center;
+            opacity: 0;
+            animation: appear 2s ease forwards;
+            animation-delay: 4s;
+        }
+
+        /* BLOOD EFFECT */
+
+        .blood-drop {
+            position: fixed;
+            background: #b00000;
+            border-radius: 50%;
+            box-shadow: 0 0 10px #700000;
+            animation: drop 4s linear forwards;
+            pointer-events: none;
+            z-index: 3;
+        }
+
+        /* SECOND SCREEN */
+
+        #second-screen {
+            position: fixed;
+            inset: 0;
+            z-index: 10;
+            display: flex;
+            align-items: center;
+            padding: 8%;
+
+            background-color: #080808;
+
+            background-image:
+                linear-gradient(
+                    90deg,
+                    rgba(0, 0, 0, 0.97) 0%,
+                    rgba(0, 0, 0, 0.80) 40%,
+                    rgba(0, 0, 0, 0.30) 100%
+                );
+
+            background-size: cover;
+            background-position: center;
+
+            opacity: 0;
+            visibility: hidden;
+            transform: scale(1.06);
+
+            transition:
+                opacity 1.5s ease,
+                transform 2s ease,
+                visibility 1.5s;
+        }
+
+        /* Dexter image layer */
+
+        #dexter-image {
+            position: absolute;
+            inset: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            object-position: center 25%;
+            z-index: -1;
+        }
+
+        #second-screen.active {
+            opacity: 1;
+            visibility: visible;
+            transform: scale(1);
+        }
+
+        .second-content {
+            position: relative;
+            z-index: 2;
+            max-width: 700px;
+            opacity: 0;
+            transform: translateY(40px);
+            transition: opacity 1.5s ease 0.4s,
+                        transform 1.5s ease 0.4s;
+        }
+
+        #second-screen.active .second-content {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .second-label {
+            color: #c00000;
+            font-family: monospace;
+            font-size: 14px;
+            letter-spacing: 8px;
+            margin-bottom: 20px;
+        }
+
+        .second-content h1 {
+            color: #e00000;
+            font-size: clamp(40px, 7vw, 100px);
+            letter-spacing: 4px;
+            text-shadow: 0 0 20px #700000;
+        }
+
+        .second-line {
+            width: 100px;
+            height: 3px;
+            margin: 25px 0;
+            background: #c00000;
+            box-shadow: 0 0 15px red;
+        }
+
+        .second-description {
+            color: #ccc;
+            font-size: 18px;
+            line-height: 2;
+            letter-spacing: 2px;
+        }
+
+        button {
+            margin-top: 35px;
+            padding: 16px 28px;
+            background: transparent;
+            border: 1px solid #a00000;
+            color: white;
+            font-family: monospace;
+            font-size: 13px;
+            letter-spacing: 3px;
+            cursor: pointer;
+            transition: 0.4s;
+        }
+
+        button:hover {
+            background: #a00000;
+            box-shadow: 0 0 20px #800000;
+            transform: translateY(-3px);
+        }
+
+        /* DETAILS SCREEN */
+
+        #details-screen {
+            position: fixed;
+            inset: 0;
+            z-index: 20;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 30px;
+            background: radial-gradient(circle, #280000, #050505 75%);
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 1s, visibility 1s;
+        }
+
+        #details-screen.active {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .details-content {
+            max-width: 850px;
+            text-align: center;
+            transform: translateY(30px);
+            transition: transform 1s;
+        }
+
+        #details-screen.active .details-content {
+            transform: translateY(0);
+        }
+
+        .details-content h2 {
+            color: #e00000;
+            font-size: clamp(35px, 6vw, 70px);
+            letter-spacing: 4px;
+            margin: 25px 0;
+            text-shadow: 0 0 25px #700000;
+        }
+
+        .details-content p {
+            color: #bbb;
+            font-size: 17px;
+            line-height: 2;
+            margin-bottom: 20px;
+        }
+
+        .warning {
+            color: #a00000 !important;
+            font-family: monospace;
+            letter-spacing: 4px;
+        }
+
+        /* ANIMATIONS */
+
+        @keyframes titleAppear {
+            0% {
+                opacity: 0;
+                transform: scale(1.5);
+                filter: blur(20px);
+            }
+
+            60% {
+                opacity: 1;
+                transform: scale(0.98);
+                filter: blur(0);
+            }
+
+            100% {
+                opacity: 1;
+                transform: scale(1);
+                filter: blur(0);
+            }
+        }
+
+        @keyframes appear {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes lineAppear {
+            to {
+                transform: scaleX(1);
+            }
+        }
+
+        @keyframes drop {
+            0% {
+                transform: translateY(-20px) scale(0.5);
+                opacity: 0;
+            }
+
+            10% {
+                opacity: 0.9;
+            }
+
+            100% {
+                transform: translateY(110vh) scale(1.5);
+                opacity: 0;
+            }
+        }
+
+        /* MOBILE */
+
+        @media (max-width: 600px) {
+            .small-text {
+                font-size: 11px;
+                letter-spacing: 4px;
+            }
+
+            .subtitle {
+                font-size: 10px;
+                letter-spacing: 3px;
+            }
+
+            .top-left {
+                top: 20px;
+                left: 15px;
+            }
+
+            .bottom-right {
+                bottom: 20px;
+                right: 15px;
+            }
+
+            .corner {
+                font-size: 9px;
+            }
+
+            #second-screen {
+                padding: 8%;
+            }
+
+            .second-label {
+                font-size: 11px;
+                letter-spacing: 4px;
+            }
+
+            .second-content h1 {
+                letter-spacing: 2px;
+            }
+
+            .second-description {
+                font-size: 15px;
+                letter-spacing: 1px;
+            }
+        }
+
+    </style>
+</head>
+
+<body>
+
+    <div id="background"></div>
+
+    <canvas id="canvas"></canvas>
+
+    <div class="corner top-left">
+        MIAMI • 01:15 AM
+    </div>
+
+    <div class="corner bottom-right">
+        DARK PASSENGER
+    </div>
+
+    <!-- FIRST SCREEN -->
+
+    <section id="intro-screen">
+
+        <div class="small-text">
+            TONIGHT'S THE NIGHT
+        </div>
+
+        <h1 class="title">
+            DEXTER
+        </h1>
+
+        <div class="subtitle">
+            EVERYONE HAS A SECRET
+        </div>
+
+    </section>
+
+    <!-- SECOND SCREEN -->
+
+    <section id="second-screen">
+
+        <!-- Şəkil yüklənməsə, aşağıdakı fayl adını yoxla -->
+        <img
+            id="dexter-image"
+            src="dexter.jpg"
+            alt="Dexter Morgan"
+        >
+
+        <div class="second-content">
+
+            <p class="second-label">
+                THE DARK PASSENGER
+            </p>
+
+            <h1>DEXTER MORGAN</h1>
+
+            <div class="second-line"></div>
+
+            <p class="second-description">
+                Blood spatter analyst.<br>
+                A secret life.<br>
+                A code that must never be broken.
+            </p>
+
+            <button id="discover-btn">
+                DISCOVER DEXTER
+            </button>
+
+        </div>
+
+    </section>
+
+    <!-- THIRD SCREEN -->
+
+    <section id="details-screen">
+
+        <div class="details-content">
+
+            <p class="warning">
+                MIAMI METRO POLICE DEPARTMENT
+            </p>
+
+            <h2>THE DARK PASSENGER</h2>
+
+            <p>
+                Dexter Morgan leads a double life.
+                By day, he works as a blood-spatter analyst.
+                Behind his calm expression lies a secret
+                few people could ever understand.
+            </p>
+
+            <p>
+                Guided by Harry's Code, Dexter struggles
+                to control his darker instincts while
+                maintaining the appearance of an ordinary life.
+            </p>
+
+            <button id="back-btn">
+                RETURN
+            </button>
+
+        </div>
+
+    </section>
+
+    <script>
+
+        /* CANVAS */
+
+        const canvas = document.getElementById("canvas");
+        const ctx = canvas.getContext("2d");
+
+        let width;
+        let height;
+        let animationRunning = true;
+
+        function resize() {
+            width = canvas.width = window.innerWidth;
+            height = canvas.height = window.innerHeight;
+        }
+
+        resize();
+
+        window.addEventListener("resize", resize);
+
+        /* PARTICLES */
+
+        const particles = [];
+
+        for (let i = 0; i < 180; i++) {
+            particles.push({
+                x: Math.random() * window.innerWidth,
+                y: Math.random() * window.innerHeight,
+                radius: Math.random() * 3 + 1,
+                speed: Math.random() * 0.5 + 0.2,
+                alpha: Math.random() * 0.6 + 0.2
+            });
+        }
+
+        function drawParticles() {
+            if (!animationRunning) return;
+
+            ctx.clearRect(0, 0, width, height);
+
+            for (let p of particles) {
+                ctx.beginPath();
+
+                ctx.arc(
+                    p.x,
+                    p.y,
+                    p.radius,
+                    0,
+                    Math.PI * 2
+                );
+
+                ctx.fillStyle = `rgba(160,0,0,${p.alpha})`;
+                ctx.fill();
+
+                p.y += p.speed;
+
+                if (p.y > height) {
+                    p.y = -10;
+                    p.x = Math.random() * width;
+                }
+            }
+
+            requestAnimationFrame(drawParticles);
+        }
+
+        drawParticles();
+
+        /* BLOOD DROPS */
+
+        let dropsRunning = true;
+
+        function createDrop() {
+            if (!dropsRunning) return;
+
+            const drop = document.createElement("div");
+            drop.className = "blood-drop";
+
+            drop.style.left = Math.random() * 100 + "%";
+            drop.style.top = Math.random() * -20 + "%";
+            drop.style.width = Math.random() * 8 + 3 + "px";
+            drop.style.height = Math.random() * 15 + 5 + "px";
+            drop.style.animationDuration = Math.random() * 3 + 3 + "s";
+
+            document.body.appendChild(drop);
+
+            setTimeout(() => drop.remove(), 7000);
+        }
+
+        const dropInterval = setInterval(createDrop, 350);
+
+        /* MOUSE EFFECT */
+
+        const title = document.querySelector(".title");
+        const introScreen = document.getElementById("intro-screen");
+
+        document.addEventListener("mousemove", function(e) {
+            if (introScreen.classList.contains("hide")) return;
+
+            const x = (e.clientX / width - 0.5) * 10;
+            const y = (e.clientY / height - 0.5) * 10;
+
+            title.style.marginLeft = x + "px";
+            title.style.marginTop = y + "px";
+        });
+
+        /* SCREEN ELEMENTS */
+
+        const secondScreen = document.getElementById("second-screen");
+        const detailsScreen = document.getElementById("details-screen");
+        const corners = document.querySelectorAll(".corner");
+
+        /* AUTOMATIC TRANSITION */
+
+        setTimeout(function() {
+
+            introScreen.classList.add("hide");
+
+            corners.forEach(function(corner) {
+                corner.classList.add("hide");
+            });
+
+            canvas.style.opacity = "0";
+
+            dropsRunning = false;
+            clearInterval(dropInterval);
+
+            setTimeout(function() {
+                secondScreen.classList.add("active");
+            }, 700);
+
+            setTimeout(function() {
+                document.querySelectorAll(".blood-drop").forEach(function(drop) {
+                    drop.remove();
+                });
+
+                animationRunning = false;
+                ctx.clearRect(0, 0, width, height);
+            }, 2500);
+
+        }, 7000);
+
+        /* OPEN DETAILS */
+
+        document.getElementById("discover-btn").addEventListener("click", function() {
+
+            secondScreen.classList.remove("active");
+
+            setTimeout(function() {
+                detailsScreen.classList.add("active");
+            }, 500);
+
+        });
+
+        /* RETURN */
+
+        document.getElementById("back-btn").addEventListener("click", function() {
+
+            detailsScreen.classList.remove("active");
+
+            setTimeout(function() {
+                secondScreen.classList.add("active");
+            }, 500);
+
+        });
+
+        /* IMAGE ERROR CHECK */
+
+        document.getElementById("dexter-image").addEventListener("error", function() {
+            console.error(
+                "Dexter şəkli tapılmadı! dexter.jpg faylını index.html ilə eyni qovluğa yerləşdir."
+            );
+        });
+
+    </script>
+
+</body>
+</html>
+
